@@ -1,30 +1,70 @@
-# Visual Recognition with IBM Watson - Image Classification
-# Requirements 1: IBM Bluemix Account (free) - https://console.ng.bluemix.net/
-# Requirements 2: watson_developer_cloud module python module
-# Once registered, login to your account, go to Services -> Watson and create a Visual Recognition instance
-# Once you have your VR instance created, you will use its API credentials in your python code
 
-from watson_developer_cloud import VisualRecognitionV3 as vr
+from watson_developer_cloud import SpeechToTextV1
+import json
 
-# creating a VR instance
+stt = SpeechToTextV1(username="790fcd0d-6fb4-4fe3-9049-5fdefa01667c", password="1FQ5kdMYPgBu")
+audio_file = open("/Users/JakeCordelli/Desktop/test2.wav", "rb")
 
-instance = vr(api_key='143a027a9be556e0c04d17cc87df0e84a6f838b4', version='2016-05-20')
+print ((json.dumps(stt.recognize(audio_file, content_type="audio/wav"), indent=2)))
 
-# select an image (local or url). Copy its location (path or url):
+from ws4py.client.threadedclient import WebSocketClient
+import base64, json, ssl, subprocess, threading, time
 
-img = instance.classify(images_url='http://ichef.bbci.co.uk/wwfeatures/wm/live/624_351/images/live/p0/3d/tk/p03dtkw2.jpg')
+class SpeechToTextClient(WebSocketClient):
+    def __init__(self) -> object:
+        """
 
-# you can run this code in the interpreter. If you request >>> img it will output a json formatted result
-# getting down the json tree with the following input will display what Watson sees in the image, and the confidence level
+        :rtype: object
+        """
+        ws_url = "wss://stream.watsonplatform.net/speech-to-text/api/v1/recognize"
 
-# >>> img['images'][0]['classifiers'][0]['classes']
+        username = "790fcd0d-6fb4-4fe3-9049-5fdefa01667c"
+        password = "1FQ5kdMYPgBu"
+        auth_string = "%s:%s" % (username, password)
+        base64string = base64.encodestring(auth_string).replace("\n", "")
 
-# for a better view of the results, you can use pprint
+        self.listening = False
 
-import pprint
+        try:
+            WebSocketClient.__init__(self, ws_url,
+                headers=[("Authorization", "Basic %s" % base64string)])
+            self.connect()
+        except: print ("Failed to open WebSocket.")
 
-pprint.pprint(img['images'][0]['classifiers'][0]['classes'])
+    def opened(self):
+        self.send('{"action": "start", "content-type": "audio/l16;rate=16000"}')
+        self.stream_audio_thread = threading.Thread(target=self.stream_audio)
+        self.stream_audio_thread.start()
 
-# I posted a demo of this here: http://bit.ly/2gZg4D9
-# If you need help with Watson and Visual Recognition, send me a message.
+    def received_message(self, message):
+        message = json.loads(str(message))
+        if "state" in message:
+            if message["state"] == "listening":
+                self.listening = True
+        print ("Message received: " + str(message))
 
+    def stream_audio(self):
+        while not self.listening:
+            time.sleep(0.1)
+
+        reccmd = ["arecord", "-f", "S16_LE", "-r", "16000", "-t", "raw"]
+        p = subprocess.Popen(reccmd, stdout=subprocess.PIPE)
+
+        while self.listening:
+            data = p.stdout.read(1024)
+
+            try: self.send(bytearray(data), binary=True)
+            except ssl.SSLError: pass
+
+        p.kill()
+
+    def close(self):
+        self.listening = False
+        self.stream_audio_thread.join()
+        WebSocketClient.close(self)
+
+try:
+    stt_client = SpeechToTextClient()
+    #raw_input()
+finally:
+    stt_client.close()
