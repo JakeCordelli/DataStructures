@@ -34,11 +34,11 @@ bool checkCol(int c, int val, std::vector <std::vector<int>> & BRD)
 bool checkBlk(int blkr, int blkc, int val, std::vector <std::vector<int>> & BRD)
 {
 	//for each collumn
-	for (int r = 0;r<3;r++)
+	for (int r = 0; r<3; r++)
 		//for each row
-		for (int c = 0;c<3;c++)
+		for (int c = 0; c<3; c++)
 			//if there is an item present, return false (no open block)
-			if (val == BRD.at(blkr+r).at(blkc+c)) return false;
+			if (val == BRD.at(blkr + r).at(blkc + c)) return false;
 
 	//else, return true (there is an open block). 
 	return true;
@@ -65,7 +65,7 @@ bool solve(std::vector <std::vector<int>> & BRD)
 	r = 0;
 	bool empty = false;
 	// dump board
-	
+
 	//iterate through each row of the board
 	for (auto row : BRD)
 	{
@@ -94,9 +94,9 @@ bool solve(std::vector <std::vector<int>> & BRD)
 		if (checkLoc(r, c, val, BRD))
 		{
 			BRD.at(r).at(c) = val;
-			
+
 			if (solve(BRD)) {
-				
+
 				return true;
 			}
 		}
@@ -122,7 +122,7 @@ Evil 1,474,316,561*/
 
 int main(int argc, _TCHAR* argv[])
 {
-	//a partially filled in sodoku boars is initialized at the beginning of the main method
+	//a partially filled in sodoku board is initialized at the beginning of the main method
 	std::vector <std::vector<int>>  BRD =
 	{
 		{ 1,0,6,4,0,0,0,0,0 },
@@ -151,7 +151,7 @@ int main(int argc, _TCHAR* argv[])
 	}
 
 	//the program is thinking
-	std::cout << "NOT Thinking " << std::endl;
+	std::cout<< std::endl<< "NOT Thinking " << std::endl<<std::endl;
 
 	//the solve method is called and the board is printed accordingly
 	solve(BRD);
@@ -161,11 +161,11 @@ int main(int argc, _TCHAR* argv[])
 
 		for (auto ch : row)
 		{
-			
+
 			std::cout << ch;
 		}
-		std::cout << std::endl;
-		
+		std::cout << std::endl<<std::endl;
+
 	}
 
 	return 0;
